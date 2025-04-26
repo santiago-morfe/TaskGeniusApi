@@ -16,7 +16,11 @@ builder.Services.AddControllers();
 
 // SQLite Configuration
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+{
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"))
+           .EnableSensitiveDataLogging() // ← Agrega esto
+           .LogTo(Console.WriteLine, LogLevel.Information); // ← Y esto
+});
 
 // Configuración de CORS para Railway
 builder.Services.AddCors(options =>
@@ -92,19 +96,32 @@ if (app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
-app.MapGet("/health", async (ApplicationDbContext dbContext) => 
+app.MapGet("/health", async (ApplicationDbContext dbContext) =>
 {
-    try 
+    try
     {
         // Intenta ejecutar una consulta simple
         var canConnect = await dbContext.Database.CanConnectAsync();
-        return canConnect 
-            ? Results.Ok("Database is healthy") 
+        return canConnect
+            ? Results.Ok("Database is healthy")
             : Results.Problem("Cannot connect to database");
     }
     catch (Exception ex)
     {
         return Results.Problem($"Database check failed: {ex.Message}");
+    }
+});
+
+app.MapGet("/debug-db", async (ApplicationDbContext db) =>
+{
+    try
+    {
+        var canConnect = await db.Database.CanConnectAsync();
+        return $"Can connect: {canConnect}";
+    }
+    catch (Exception ex)
+    {
+        return $"Error: {ex.Message}";
     }
 });
 app.UseCors("RailwayPolicy");

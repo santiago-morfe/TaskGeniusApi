@@ -32,3 +32,6 @@ EXPOSE 8080
 COPY --from=build /app/publish .
 
 ENTRYPOINT ["dotnet", "TaskGeniusApi.dll", "--apply-migrations"]
+
+# Asegúrate de copiar la base de datos (SQLite)
+COPY TaskGeniusApi/MiProyecto.db /app/MiProyecto.db
