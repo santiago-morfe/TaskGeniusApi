@@ -99,12 +99,12 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
 // });
 
 // Solo usar HTTPS Redirection en desarrollo
-// if (app.Environment.IsDevelopment())
-// {
+if (app.Environment.IsDevelopment())
+{
     app.UseSwagger();
     app.UseSwaggerUI();
     app.UseHttpsRedirection();
-// }
+}
 
 
 // Manejar migraciones desde línea de comandos
