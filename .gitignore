@@ -1,0 +1,58 @@
+# Archivos generados por el entorno de desarrollo
+.vs/
+.idea/
+*.user
+*.suo
+
+# Archivos de compilación
+bin/
+obj/
+out/
+
+# Configuración de paquetes
+*.nupkg
+*.snupkg
+
+# Archivos de publicación
+publish/
+wwwroot/
+
+# Configuración de dependencias
+packages/
+*.lock.json
+project.lock.json
+
+# Archivos de logs y temporales
+*.log
+*.tlog
+*.tmp
+*.temp
+
+# Configuración de sistema operativo
+.DS_Store
+Thumbs.db
+
+# Archivos de configuración sensibles
+appsettings.json
+appsettings.*.json
+secrets.json
+
+# Archivos de cobertura de pruebas
+coverage/
+*.coverage
+*.coveragexml
+
+# Archivos de migraciones de Entity Framework
+Migrations/
+
+# Archivos de Docker
+docker-compose.override.yml
+.env
+.env.*
+
+# Archivos de Rider
+.idea/
+*.sln.iml
+
+# archivo de base de datos SQLite
+*.db
