@@ -14,4 +14,6 @@ RUN dotnet publish -c Release -o /app/publish
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app
 COPY --from=build /app/publish .
-ENTRYPOINT ["dotnet", "TaskGeniusApi.dll"]
+
+# Ejecutar migraciones antes de iniciar la aplicación
+ENTRYPOINT ["sh", "-c", "dotnet TaskGeniusApi.dll --migrate"]

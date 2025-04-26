@@ -33,9 +33,9 @@ project.lock.json
 Thumbs.db
 
 # Archivos de configuración sensibles
-appsettings.json
-appsettings.*.json
-secrets.json
+# appsettings.json
+# appsettings.*.json
+# secrets.json
 
 # Archivos de cobertura de pruebas
 coverage/

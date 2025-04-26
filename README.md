@@ -28,14 +28,6 @@ El proyecto sigue una arquitectura modular y está organizado en las siguientes 
 - **JWT (JSON Web Tokens)**: Para la autenticación y autorización.
 - **SQLite**: Base de datos utilizada en el desarrollo.
 
-## Despliegue
-
-La API está desplegada en un entorno local para pruebas y desarrollo. Para ejecutarla, asegúrate de tener instalado .NET 8 y sigue los pasos a continuación:
-
-1. Clona el repositorio en tu máquina local.
-2. Restaura las dependencias ejecutando `dotnet restore`.
-3. Aplica las migraciones a la base de datos con `dotnet ef database update`.
-4. Inicia la aplicación con `dotnet run`.
 
 ## Endpoints principales
 
@@ -53,6 +45,9 @@ La API está desplegada en un entorno local para pruebas y desarrollo. Para ejec
   - `PUT /tasks/{id}`: Actualiza una tarea existente.
   - `DELETE /tasks/{id}`: Elimina una tarea.
 
+## Despliegue
+
+El proyecto se encuentra desplegado en: [taskgeniusapi-production.up.railway.app](https://taskgeniusapi-production.up.railway.app)
 
 ## Contacto
 
