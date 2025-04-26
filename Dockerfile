@@ -31,4 +31,4 @@ WORKDIR /app
 EXPOSE 8080
 COPY --from=build /app/publish .
 
-ENTRYPOINT ["dotnet", "TaskGeniusApi.dll"]
+ENTRYPOINT ["dotnet", "TaskGeniusApi.dll", "--migrate"]
