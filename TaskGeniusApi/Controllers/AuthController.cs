@@ -14,7 +14,7 @@ public class AuthController(IJwtService jwtService, IUsersService usersService) 
     private readonly IUsersService _usersService = usersService;
 
     [HttpPost("register")]
-    public async Task<RegisterResponseDto> Register([FromBody] RegisterRequestDto registerDto)
+    public async Task<RegisterResponseDto?> Register([FromBody] RegisterRequestDto registerDto)
     {
         var user = await _usersService.CreateUserAsync(new DTOs.Users.CreateUserDto
         {
@@ -37,7 +37,7 @@ public class AuthController(IJwtService jwtService, IUsersService usersService) 
     }
 
     [HttpPost("login")]
-    public async Task<LoginResponseDto> Login([FromBody] LoginRequestDto loginDto)
+    public async Task<LoginResponseDto?> Login([FromBody] LoginRequestDto loginDto)
     {
         var user = await _usersService.GetUserByEmailAsync(loginDto.Email);
         if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash))

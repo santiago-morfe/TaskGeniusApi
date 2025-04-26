@@ -43,7 +43,7 @@ coverage/
 *.coveragexml
 
 # Archivos de migraciones de Entity Framework
-Migrations/
+# Migrations/
 
 # Archivos de Docker
 docker-compose.override.yml

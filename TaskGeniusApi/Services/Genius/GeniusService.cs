@@ -68,6 +68,12 @@ namespace TaskGeniusApi.Services.Genius
 
                 var apiResponse = JsonSerializer.Deserialize<GeminiApiResponse>(payload, _jsonOptions);
 
+                if (apiResponse == null)
+                {
+                    _logger.LogWarning("Gemini API response is null");
+                    return new TaskAdviceResponseDto { Advice = "No se pudo obtener un consejo." };
+                }
+
                 return BuildResponse(apiResponse);
             }
             catch (HttpRequestException ex)
