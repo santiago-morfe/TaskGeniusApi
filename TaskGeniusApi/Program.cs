@@ -92,6 +92,9 @@ if (app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
+app.MapGet("/health", async (ApplicationDbContext db) => 
+    await db.Users.AnyAsync() ? Results.Ok() : Results.Problem());
+
 app.UseCors("RailwayPolicy");
 app.UseAuthentication();
 app.UseAuthorization();
