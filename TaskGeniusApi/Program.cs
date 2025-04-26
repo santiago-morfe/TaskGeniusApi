@@ -88,23 +88,23 @@ app.UseForwardedHeaders(new ForwardedHeadersOptions
 });
 
 // Middleware personalizado para forzar método HTTP
-app.Use(async (context, next) =>
-{
-    var forwardedMethod = context.Request.Headers["X-Forwarded-Method"].FirstOrDefault();
-    if (!string.IsNullOrEmpty(forwardedMethod))
-    {
-        context.Request.Method = forwardedMethod;
-    }
-    await next();
-});
+// app.Use(async (context, next) =>
+// {
+//     var forwardedMethod = context.Request.Headers["X-Forwarded-Method"].FirstOrDefault();
+//     if (!string.IsNullOrEmpty(forwardedMethod))
+//     {
+//         context.Request.Method = forwardedMethod;
+//     }
+//     await next();
+// });
 
 // Solo usar HTTPS Redirection en desarrollo
-if (app.Environment.IsDevelopment())
-{
+// if (app.Environment.IsDevelopment())
+// {
     app.UseSwagger();
     app.UseSwaggerUI();
     app.UseHttpsRedirection();
-}
+// }
 
 
 // Manejar migraciones desde línea de comandos
