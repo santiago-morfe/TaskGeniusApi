@@ -11,14 +11,24 @@ using TaskGeniusApi.Services.Genius;
 
 var builder = WebApplication.CreateBuilder(args);
 
-
-
 // Add services to the container
 builder.Services.AddControllers();
 
 // SQLite Configuration
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Configuración de CORS para Railway
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("RailwayPolicy", policy =>
+    {
+        policy.WithOrigins("https://*.railway.app")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
+});
 
 // JWT Configuration
 builder.Services.AddAuthentication(options =>
@@ -41,7 +51,6 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
@@ -50,28 +59,37 @@ builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IUsersService, UsersService>();
 builder.Services.AddScoped<ITasksServices, TasksServices>();
 builder.Services.AddScoped<IGeniusService, GeniusService>();
-
-// Registrar HttpClient
 builder.Services.AddHttpClient();
 
 var app = builder.Build();
 
-// Solo usar HTTPS Redirection en desarrollo
+// Aplicar migraciones solo si se especifica el flag --migrate
+if (args.Contains("--migrate"))
+{
+    using (var scope = app.Services.CreateScope())
+    {
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        db.Database.Migrate();
+    }
+    return; // Termina la ejecución después de migrar
+}
+
+// Aplicar migraciones automáticamente en desarrollo
+if (app.Environment.IsDevelopment())
+{
+    using (var scope = app.Services.CreateScope())
+    {
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        db.Database.Migrate();
+    }
+}
+
+// Configuración de middlewares
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
     app.UseHttpsRedirection();
-}
-
-
-// Manejar migraciones desde línea de comandos
-if (args.Contains("--migrate"))
-{
-    using var scope = app.Services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    db.Database.Migrate();
-    return; // Opcional: terminar después de migraciones
 }
 
 app.UseCors("RailwayPolicy");
