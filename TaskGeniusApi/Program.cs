@@ -92,9 +92,21 @@ if (app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 }
 
-app.MapGet("/health", async (ApplicationDbContext db) => 
-    await db.Users.AnyAsync() ? Results.Ok() : Results.Problem());
-
+app.MapGet("/health", async (ApplicationDbContext dbContext) => 
+{
+    try 
+    {
+        // Intenta ejecutar una consulta simple
+        var canConnect = await dbContext.Database.CanConnectAsync();
+        return canConnect 
+            ? Results.Ok("Database is healthy") 
+            : Results.Problem("Cannot connect to database");
+    }
+    catch (Exception ex)
+    {
+        return Results.Problem($"Database check failed: {ex.Message}");
+    }
+});
 app.UseCors("RailwayPolicy");
 app.UseAuthentication();
 app.UseAuthorization();
