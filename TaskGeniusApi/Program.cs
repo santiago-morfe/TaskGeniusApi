@@ -8,6 +8,7 @@ using TaskGeniusApi.Services.Auth;
 using TaskGeniusApi.Services.Users;
 using TaskGeniusApi.Services.Tasks;
 using TaskGeniusApi.Services.Genius;
+using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -15,7 +16,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 
 // SQLite Configuration
-builder.Services.AddDbContext<ApplicationDbContext>(options => 
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // JWT Configuration
@@ -40,10 +41,20 @@ builder.Services.AddAuthentication(options =>
 });
 
 // HttpClient para APIs externas
-builder.Services.AddHttpClient("ExternalApi", client => {
+builder.Services.AddHttpClient("ExternalApi", client =>
+{
     var baseUrl = builder.Configuration["ExternalApi:BaseUrl"] ?? throw new InvalidOperationException("External API BaseUrl is not configured");
     client.BaseAddress = new Uri(baseUrl);
     client.DefaultRequestHeaders.Add("Accept", "application/json");
+});
+
+// CORS Configuration
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAllOrigins",
+        builder => builder.AllowAnyOrigin()
+            .AllowAnyMethod()
+            .AllowAnyHeader());
 });
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
@@ -67,6 +78,14 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor |
+                       ForwardedHeaders.XForwardedProto ,
+                    //    ForwardedHeaders.XForwardedMethod |
+    ForwardLimit = 2
+});
 
 app.UseHttpsRedirection();
 app.UseAuthentication();
