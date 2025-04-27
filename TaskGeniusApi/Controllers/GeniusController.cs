@@ -15,11 +15,6 @@ public class GeniusController(IGeniusService geniusService, ITasksServices tasks
     private readonly IGeniusService _geniusService = geniusService;
     private readonly ITasksServices _tasksService = tasksService;
 
-    private string GetUserIdFromToken()
-    {
-        return User.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new UnauthorizedAccessException("User ID not found in token");
-    }
-
     [HttpGet("advice")]
     public async Task<TaskAdviceResponseDto> GetTaskAdvice()
     {
@@ -37,16 +32,33 @@ public class GeniusController(IGeniusService geniusService, ITasksServices tasks
         var requestDto = new TaskAdviceRequestDto
         {
             Tasks = [.. tasks
-            .Where(task => !task.IsCompleted)
-            .Select(task => new TaskDetailDto
-            {
-                Title = task.Title,
-                Description = task.Description,
-                DueDate = task.DueDate
-            })]
+                .Where(task => !task.IsCompleted)
+                .Select(task => new TaskDetailDto
+                {
+                    Title = task.Title,
+                    Description = task.Description,
+                    DueDate = task.DueDate
+                })]
         };
 
         var advice = await _geniusService.GetAdviceAsync(requestDto);
         return advice;
+    }
+
+    [HttpGet("titleSuggestion")]
+    public async Task<TitleSuggestionResponseDto> GetTitleSuggestion([FromQuery] TitleSuggestionRequestDto requestDto)
+    {
+        return await _geniusService.GetTitleSuggestionAsync(requestDto.TaskDescription);
+    }
+
+    [HttpGet("descriptionFormatting")]
+    public async Task<DescriptionFormattingResponseDto> GetDescriptionFormatting([FromQuery] DescriptionFormattingRequestDto requestDto)
+    {
+        return await _geniusService.GetDescriptionFormattingAsync(requestDto.TaskDescription);
+    }
+
+    private string GetUserIdFromToken()
+    {
+        return User.FindFirstValue(ClaimTypes.NameIdentifier) ?? throw new UnauthorizedAccessException("User ID not found in token");
     }
 }

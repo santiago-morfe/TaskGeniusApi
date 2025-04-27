@@ -55,4 +55,4 @@ docker-compose.override.yml
 *.sln.iml
 
 # archivo de base de datos SQLite
-# *.db
+*.db
