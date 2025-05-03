@@ -48,8 +48,15 @@ public class TaskController(ITasksServices tasksService) : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreateTask([FromBody] CreateTaskDto createTaskDto)
+    public async Task<IActionResult> CreateTask([FromBody] CreateTaskRequestDto createTaskRequestDto)
     {
+        var createTaskDto = new CreateTaskDto
+        {
+            Title = createTaskRequestDto.Title,
+            Description = createTaskRequestDto.Description,
+            DueDate = createTaskRequestDto.DueDate,
+            IsCompleted = createTaskRequestDto.IsCompleted
+        };
         var userId = GetUserIdFromToken();
         createTaskDto.UserId = userId;
         var task = await _tasksService.CreateTaskAsync(createTaskDto);
