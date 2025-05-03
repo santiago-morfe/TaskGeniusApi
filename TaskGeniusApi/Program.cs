@@ -7,6 +7,7 @@ using TaskGeniusApi.Services.Auth;
 using TaskGeniusApi.Services.Users;
 using TaskGeniusApi.Services.Tasks;
 using TaskGeniusApi.Services.Genius;
+using System;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -79,10 +80,9 @@ void ConfigureCors(IServiceCollection services)
 {
     services.AddCors(options =>
     {
-        // Configuración para Railway
         options.AddPolicy("PermitirTodo", policy =>
         {
-            policy.SetIsOriginAllowed(_ => true) // ¡Peligroso! Solo para desarrollo
+            policy.WithOrigins("http://localhost:5173")
                   .AllowAnyHeader()
                   .AllowAnyMethod()
                   .AllowCredentials();
