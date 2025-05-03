@@ -80,13 +80,16 @@ void ConfigureCors(IServiceCollection services)
     services.AddCors(options =>
     {
         // Configuración para Railway
-        options.AddPolicy("RailwayPolicy", policy =>
-        {
-            policy.WithOrigins("https://*")
-                .AllowAnyHeader()
-                .AllowAnyMethod()
-                .AllowCredentials();
-        });
+        options.AddPolicy("AllOrigins", policy =>
+    {
+        policy.WithOrigins(
+                "http://localhost:5173",  // Frontend local
+                "https://*.railway.app"   // Producción
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
 
         // Configuración para desarrollo
         options.AddPolicy("DevelopmentPolicy", policy =>
