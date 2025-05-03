@@ -111,11 +111,8 @@ void ConfigureMiddleware(WebApplication app, IWebHostEnvironment env, string[] a
         app.UseHttpsRedirection();
     }
 
-    // Endpoints de salud y diagnóstico
-    // app.MapHealthEndpoints();
-
     // Middleware estándar
-    app.UseCors(env.IsDevelopment() ? "DevelopmentPolicy" : "RailwayPolicy");
+    app.UseCors("PermitirTodo"); // Aseguramos que se use la política "PermitirTodo" en todos los entornos
     app.UseAuthentication();
     app.UseAuthorization();
     app.MapControllers();
