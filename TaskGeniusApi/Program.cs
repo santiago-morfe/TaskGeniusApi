@@ -69,7 +69,7 @@ void ConfigureJwtAuthentication(IServiceCollection services, IConfiguration conf
             ValidIssuer = configuration["Jwt:Issuer"],
             ValidAudience = configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(configuration["Jwt:Key"] ?? 
+                Encoding.UTF8.GetBytes(configuration["Jwt:Key"] ??
                     throw new InvalidOperationException("JWT Key is not configured")))
         };
     });
@@ -80,24 +80,12 @@ void ConfigureCors(IServiceCollection services)
     services.AddCors(options =>
     {
         // Configuración para Railway
-        options.AddPolicy("AllOrigins", policy =>
-    {
-        policy.WithOrigins(
-                "http://localhost:5173",  // Frontend local
-                "https://*.railway.app"   // Producción
-            )
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials();
-    });
-
-        // Configuración para desarrollo
-        options.AddPolicy("DevelopmentPolicy", policy =>
+        options.AddPolicy("PermitirTodo", policy =>
         {
-            policy.WithOrigins("http://localhost:3000", "https://localhost:3000")
-                .AllowAnyHeader()
-                .AllowAnyMethod()
-                .AllowCredentials();
+            policy.SetIsOriginAllowed(_ => true) // ¡Peligroso! Solo para desarrollo
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials();
         });
     });
 }
@@ -140,7 +128,7 @@ void HandleMigrations(WebApplication app, string[] args)
     {
         using var scope = app.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        
+
         try
         {
             db.Database.Migrate();
