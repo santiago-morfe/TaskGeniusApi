@@ -1,4 +1,3 @@
-// Configuración básica
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
@@ -11,122 +10,147 @@ using TaskGeniusApi.Services.Genius;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container
-builder.Services.AddControllers();
-
-// SQLite Configuration
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-{
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"))
-           .EnableSensitiveDataLogging() // ← Agrega esto
-           .LogTo(Console.WriteLine, LogLevel.Information); // ← Y esto
-});
-
-// Configuración de CORS para Railway
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("RailwayPolicy", policy =>
-    {
-        policy.WithOrigins("https://*.railway.app")
-            .AllowAnyHeader()
-            .AllowAnyMethod()
-            .AllowCredentials();
-    });
-});
-
-// JWT Configuration
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-})
-.AddJwtBearer(options =>
-{
-    options.TokenValidationParameters = new TokenValidationParameters
-    {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
-        ValidIssuer = builder.Configuration["Jwt:Issuer"],
-        ValidAudience = builder.Configuration["Jwt:Audience"],
-        IssuerSigningKey = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? throw new InvalidOperationException("JWT Key is not configured")))
-    };
-});
-
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
-// Registro de servicios
-builder.Services.AddScoped<IJwtService, JwtService>();
-builder.Services.AddScoped<IUsersService, UsersService>();
-builder.Services.AddScoped<ITasksServices, TasksServices>();
-builder.Services.AddScoped<IGeniusService, GeniusService>();
-builder.Services.AddHttpClient();
+// Configuración de servicios
+ConfigureServices(builder.Services, builder.Configuration);
 
 var app = builder.Build();
 
-// Aplicar migraciones solo si se especifica el flag --migrate
-if (args.Contains("--migrate"))
-{
-    using (var scope = app.Services.CreateScope())
-    {
-        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        db.Database.Migrate();
-    }
-    return; // Termina la ejecución después de migrar
-}
-
-// Aplicar migraciones automáticamente en desarrollo
-if (app.Environment.IsDevelopment())
-{
-    using (var scope = app.Services.CreateScope())
-    {
-        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        db.Database.Migrate();
-    }
-}
-
-// Configuración de middlewares
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-    app.UseHttpsRedirection();
-}
-
-app.MapGet("/health", async (ApplicationDbContext dbContext) =>
-{
-    try
-    {
-        // Intenta ejecutar una consulta simple
-        var canConnect = await dbContext.Database.CanConnectAsync();
-        return canConnect
-            ? Results.Ok("Database is healthy")
-            : Results.Problem("Cannot connect to database");
-    }
-    catch (Exception ex)
-    {
-        return Results.Problem($"Database check failed: {ex.Message}");
-    }
-});
-
-app.MapGet("/debug-db", async (ApplicationDbContext db) =>
-{
-    try
-    {
-        var canConnect = await db.Database.CanConnectAsync();
-        return $"Can connect: {canConnect}";
-    }
-    catch (Exception ex)
-    {
-        return $"Error: {ex.Message}";
-    }
-});
-app.UseCors("RailwayPolicy");
-app.UseAuthentication();
-app.UseAuthorization();
-app.MapControllers();
+// Configuración de la pipeline HTTP
+ConfigureMiddleware(app, builder.Environment, args);
 
 app.Run();
+
+void ConfigureServices(IServiceCollection services, IConfiguration configuration)
+{
+    // Configuración básica
+    services.AddControllers();
+    services.AddEndpointsApiExplorer();
+    services.AddSwaggerGen();
+    services.AddHttpClient();
+
+    // Configuración de la base de datos
+    ConfigureDatabase(services, configuration);
+
+    // Configuración de autenticación JWT
+    ConfigureJwtAuthentication(services, configuration);
+
+    // Configuración de CORS
+    ConfigureCors(services);
+
+    // Registro de servicios de aplicación
+    RegisterApplicationServices(services);
+}
+
+void ConfigureDatabase(IServiceCollection services, IConfiguration configuration)
+{
+    services.AddDbContext<ApplicationDbContext>(options =>
+    {
+        options.UseSqlite(configuration.GetConnectionString("DefaultConnection"))
+               .EnableSensitiveDataLogging()
+               .LogTo(Console.WriteLine, LogLevel.Information);
+    });
+}
+
+void ConfigureJwtAuthentication(IServiceCollection services, IConfiguration configuration)
+{
+    services.AddAuthentication(options =>
+    {
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    })
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidateIssuerSigningKey = true,
+            ValidIssuer = configuration["Jwt:Issuer"],
+            ValidAudience = configuration["Jwt:Audience"],
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(configuration["Jwt:Key"] ?? 
+                    throw new InvalidOperationException("JWT Key is not configured")))
+        };
+    });
+}
+
+void ConfigureCors(IServiceCollection services)
+{
+    services.AddCors(options =>
+    {
+        // Configuración para Railway
+        options.AddPolicy("RailwayPolicy", policy =>
+        {
+            policy.WithOrigins("https://*")
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials();
+        });
+
+        // Configuración para desarrollo
+        options.AddPolicy("DevelopmentPolicy", policy =>
+        {
+            policy.WithOrigins("http://localhost:3000", "https://localhost:3000")
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials();
+        });
+    });
+}
+
+void RegisterApplicationServices(IServiceCollection services)
+{
+    services.AddScoped<IJwtService, JwtService>();
+    services.AddScoped<IUsersService, UsersService>();
+    services.AddScoped<ITasksServices, TasksServices>();
+    services.AddScoped<IGeniusService, GeniusService>();
+}
+
+void ConfigureMiddleware(WebApplication app, IWebHostEnvironment env, string[] args)
+{
+    // Manejo de migraciones
+    HandleMigrations(app, args);
+
+    // Configuración de Swagger solo en desarrollo
+    if (env.IsDevelopment())
+    {
+        app.UseSwagger();
+        app.UseSwaggerUI();
+        app.UseHttpsRedirection();
+    }
+
+    // Endpoints de salud y diagnóstico
+    // app.MapHealthEndpoints();
+
+    // Middleware estándar
+    app.UseCors(env.IsDevelopment() ? "DevelopmentPolicy" : "RailwayPolicy");
+    app.UseAuthentication();
+    app.UseAuthorization();
+    app.MapControllers();
+}
+
+void HandleMigrations(WebApplication app, string[] args)
+{
+    // Ejecutar migraciones si se especifica el flag --migrate o en desarrollo
+    if (args.Contains("--migrate") || app.Environment.IsDevelopment())
+    {
+        using var scope = app.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        
+        try
+        {
+            db.Database.Migrate();
+            Console.WriteLine("Migraciones aplicadas exitosamente.");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error al aplicar migraciones: {ex.Message}");
+        }
+
+        if (args.Contains("--migrate"))
+        {
+            Environment.Exit(0); // Termina la ejecución después de migrar
+        }
+    }
+}
