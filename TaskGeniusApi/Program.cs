@@ -7,7 +7,8 @@ using TaskGeniusApi.Services.Auth;
 using TaskGeniusApi.Services.Users;
 using TaskGeniusApi.Services.Tasks;
 using TaskGeniusApi.Services.Genius;
-using System;
+// rate limit
+using Microsoft.AspNetCore.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -37,6 +38,16 @@ void ConfigureServices(IServiceCollection services, IConfiguration configuration
 
     // Configuración de CORS
     ConfigureCors(services);
+
+    // Configuración de limitación de tasa
+    services.AddRateLimiter(options =>
+    {
+        options.AddFixedWindowLimiter("FixedWindowPolicy", limiterOptions =>
+        {
+            limiterOptions.PermitLimit = 30; // Máximo de 30 peticiones
+            limiterOptions.Window = TimeSpan.FromMinutes(1); // Por minuto
+        });
+    });
 
     // Registro de servicios de aplicación
     RegisterApplicationServices(services);
@@ -115,6 +126,7 @@ void ConfigureMiddleware(WebApplication app, IWebHostEnvironment env, string[] a
     app.UseCors("PermitirTodo"); // Aseguramos que se use la política "PermitirTodo" en todos los entornos
     app.UseAuthentication();
     app.UseAuthorization();
+    app.UseRateLimiter();
     app.MapControllers();
 }
 
