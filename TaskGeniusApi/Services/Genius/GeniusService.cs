@@ -127,17 +127,17 @@ namespace TaskGeniusApi.Services.Genius
             _logger.LogError(ex, "Error occurred while processing request to URL: {Url}", url);
         }
 
-        private string CreatePromptForTitleSuggestion(string taskDescription)
+        private static string CreatePromptForTitleSuggestion(string taskDescription)
         {
-            return $"Sugiere un título breve y descriptivo para la siguiente tarea: \"{taskDescription}\".";
+            return $"genera un título breve y descriptivo para la siguiente tarea: \"{taskDescription}\" deve ser una sola frase y contesta de forma brebe solo con la la sugerencia del titulo que deve ser una sola y nada.";
         }
 
-        private string CreatePromptForDescriptionFormatting(string taskDescription)
+        private static string CreatePromptForDescriptionFormatting(string taskDescription)
         {
-            return $"Formatea la siguiente descripción de tarea para que sea más clara y fácil de entender: \"{taskDescription}\".";
+            return $"Formatea la siguiente descripción de tarea para que sea más clara y fácil de entender: \"{taskDescription}\" ( resonde solo con el texto se sigerencia y nada mas, no hagreges nada ni formato ni sugerencias ni consejos ).";
         }
 
-        private GeminiRequest CreateGeminiRequest(string prompt, int maxOutputTokens)
+        private static GeminiRequest CreateGeminiRequest(string prompt, int maxOutputTokens)
         {
             return new GeminiRequest
             {
@@ -159,13 +159,13 @@ namespace TaskGeniusApi.Services.Genius
             };
         }
 
-        private TitleSuggestionResponseDto ExtractTitleFromResponse(GeminiApiResponse apiResponse)
+        private static TitleSuggestionResponseDto ExtractTitleFromResponse(GeminiApiResponse apiResponse)
         {
             var title = apiResponse?.Candidates?.FirstOrDefault()?.Content?.Parts?.FirstOrDefault()?.Text?.Trim();
             return new TitleSuggestionResponseDto { Title = title ?? "No se pudo generar un título." };
         }
 
-        private DescriptionFormattingResponseDto ExtractDescriptionFromResponse(GeminiApiResponse apiResponse)
+        private static DescriptionFormattingResponseDto ExtractDescriptionFromResponse(GeminiApiResponse apiResponse)
         {
             var description = apiResponse?.Candidates?.FirstOrDefault()?.Content?.Parts?.FirstOrDefault()?.Text?.Trim();
             return new DescriptionFormattingResponseDto { Description = description ?? "No se pudo formatear la descripción." };
@@ -173,10 +173,7 @@ namespace TaskGeniusApi.Services.Genius
 
         private static void ValidateRequest(TaskAdviceRequestDto requestDto)
         {
-            if (requestDto == null)
-            {
-                throw new ArgumentNullException(nameof(requestDto));
-            }
+            ArgumentNullException.ThrowIfNull(requestDto);
 
             if (requestDto.Tasks == null || requestDto.Tasks.Count == 0)
             {
@@ -200,14 +197,14 @@ namespace TaskGeniusApi.Services.Genius
 
             return new GeminiRequest
             {
-                Contents = new[]
-                {
+                Contents =
+                [
                     new ContentItem
                     {
                         Role = "user",
                         Parts = new[] { new TextPart { Text = promptText.ToString() } }
                     }
-                },
+                ],
                 GenerationConfig = new GenerationConfig
                 {
                     Temperature = 0.7,
