@@ -73,7 +73,7 @@ public class TaskController(ITasksServices tasksService) : ControllerBase
         return CreatedAtAction(nameof(GetTaskById), new { id = task.Id }, task);
     }
 
-    [HttpPut("{id}")]
+    [HttpPut]
     public async Task<IActionResult> UpdateTask([FromBody] UpdateTaskDto updateTaskDto)
     {
         var userId = GetUserIdFromToken();
