@@ -56,9 +56,9 @@ public class TasksServices(ApplicationDbContext dbContext) : ITasksServices
         };
     }
 
-    public async Task<TaskDto> UpdateTaskAsync(int id, UpdateTaskDto taskDto)
+    public async Task<TaskDto> UpdateTaskAsync(UpdateTaskDto taskDto)
     {
-        var task = await _dbContext.Tasks.FindAsync(id);
+        var task = await _dbContext.Tasks.FindAsync(taskDto.Id);
         if (task == null) return null!;
 
         task.Title = taskDto.Title ?? task.Title;

@@ -76,13 +76,23 @@ public class TaskController(ITasksServices tasksService) : ControllerBase
     [HttpPut]
     public async Task<IActionResult> UpdateTask([FromBody] UpdateTaskDto updateTaskDto)
     {
+
         var userId = GetUserIdFromToken();
         var task = await _tasksService.GetTaskByIdAsync(updateTaskDto.Id);
         if (task == null || task.UserId != userId)
         {
             return NotFound("Task not found or access denied");
         }
-        var updatedTask = await _tasksService.UpdateTaskAsync(updateTaskDto.Id, updateTaskDto);
+
+        var newUpdateTask = new UpdateTaskDto
+        {
+            Title = updateTaskDto.Title ?? task.Title,
+            Description = updateTaskDto.Description ?? task.Description,
+            DueDate = updateTaskDto.DueDate ?? task.DueDate,
+            IsCompleted = updateTaskDto.IsCompleted ?? task.IsCompleted,
+        };
+
+        var updatedTask = await _tasksService.UpdateTaskAsync(updateTaskDto);
         return Ok(updatedTask);
     }
 
