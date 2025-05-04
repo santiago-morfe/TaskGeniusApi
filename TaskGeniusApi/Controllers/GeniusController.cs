@@ -46,15 +46,23 @@ public class GeniusController(IGeniusService geniusService, ITasksServices tasks
     }
 
     [HttpPost("titleSuggestion")]
-    public async Task<TitleSuggestionResponseDto> GetTitleSuggestion([FromQuery] TitleSuggestionRequestDto requestDto)
+    public async Task<TitleSuggestionResponseDto> GetTitleSuggestion([FromBody] TitleSuggestionRequestDto requestDto)
     {
-        return await _geniusService.GetTitleSuggestionAsync(requestDto.TaskDescription);
+        if (string.IsNullOrWhiteSpace(requestDto.Description))
+        {
+            throw new ArgumentException("Task description cannot be null or empty.", nameof(requestDto.Description));
+        }
+        return await _geniusService.GetTitleSuggestionAsync(requestDto.Description);
     }
 
     [HttpPost("descriptionFormatting")]
-    public async Task<DescriptionFormattingResponseDto> GetDescriptionFormatting([FromQuery] DescriptionFormattingRequestDto requestDto)
+    public async Task<DescriptionFormattingResponseDto> GetDescriptionFormatting([FromBody] DescriptionFormattingRequestDto requestDto)
     {
-        return await _geniusService.GetDescriptionFormattingAsync(requestDto.TaskDescription);
+        if (string.IsNullOrWhiteSpace(requestDto.Description))
+        {
+            throw new ArgumentException("Task description cannot be null or empty.", nameof(requestDto.Description));
+        }
+        return await _geniusService.GetDescriptionFormattingAsync(requestDto.Description);
     }
 
     private string GetUserIdFromToken()

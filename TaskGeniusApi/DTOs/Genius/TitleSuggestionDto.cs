@@ -8,5 +8,5 @@ public class TitleSuggestionResponseDto
 
 public class TitleSuggestionRequestDto
 {
-    public string TaskDescription { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
 }

@@ -32,125 +32,114 @@ namespace TaskGeniusApi.Services.Genius
             };
         }
 
+        // Refactorización de métodos para mejorar la legibilidad y el control de errores
         public async Task<TaskAdviceResponseDto> GetAdviceAsync(TaskAdviceRequestDto requestDto)
         {
             ValidateRequest(requestDto);
-            
-            var requestContent = BuildRequestContent(requestDto);
             var url = BuildRequestUrl();
-
-            _logger.LogDebug("Sending request to Gemini API. URL: {Url}", url);
+            var jsonPayload = SerializeRequest(BuildRequestContent(requestDto));
 
             try
             {
-                var jsonPayload = JsonSerializer.Serialize(requestContent, _jsonOptions);
-                _logger.LogDebug("Request payload: {Payload}", jsonPayload);
-
-                using var httpContent = new StringContent(
-                    jsonPayload, 
-                    Encoding.UTF8, 
-                    "application/json");
-
-                using var response = await _httpClient.PostAsync(url, httpContent);
-                
-                await EnsureSuccessResponse(response, url, jsonPayload);
-                
-                var payload = await response.Content.ReadAsStringAsync();
-                _logger.LogDebug("API Response: {Response}", payload);
-
-                var apiResponse = JsonSerializer.Deserialize<GeminiApiResponse>(payload, _jsonOptions);
-
-                if (apiResponse == null)
-                {
-                    _logger.LogWarning("Gemini API response is null");
-                    return new TaskAdviceResponseDto { Advice = "No se pudo obtener un consejo." };
-                }
+                var response = await SendPostRequestAsync(url, jsonPayload);
+                var apiResponse = DeserializeResponse<GeminiApiResponse>(response);
 
                 return BuildResponse(apiResponse);
             }
-            catch (HttpRequestException ex)
-            {
-                _logger.LogError(ex, "HTTP request failed for URL: {Url}", url);
-                throw new GeniusServiceException("Failed to communicate with Gemini API", ex);
-            }
-            catch (JsonException ex)
-            {
-                _logger.LogError(ex, "Failed to deserialize Gemini API response");
-                throw new GeniusServiceException("Invalid response from Gemini API", ex);
-            }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "An unexpected error occurred while processing the request");
+                HandleException(ex, url);
                 throw;
             }
         }
 
         public async Task<TitleSuggestionResponseDto> GetTitleSuggestionAsync(string taskDescription)
         {
-            if (string.IsNullOrWhiteSpace(taskDescription))
-            {
-                throw new ArgumentException("Task description cannot be null or empty", nameof(taskDescription));
-            }
-
-            var prompt = $"Sugiere un título breve y descriptivo para la siguiente tarea: \"{taskDescription}\".";
-
-            var request = new GeminiRequest
-            {
-                Contents = new[]
-                {
-                    new ContentItem
-                    {
-                        Role = "user",
-                        Parts = new[] { new TextPart { Text = prompt } }
-                    }
-                },
-                GenerationConfig = new GenerationConfig
-                {
-                    Temperature = 0.7,
-                    MaxOutputTokens = 50,
-                    TopP = 0.9,
-                    TopK = 40
-                }
-            };
-
+            ValidateDescription(taskDescription);
+            var prompt = CreatePromptForTitleSuggestion(taskDescription);
             var url = BuildRequestUrl();
+            var jsonPayload = SerializeRequest(CreateGeminiRequest(prompt, 50));
 
             try
             {
-                var jsonPayload = JsonSerializer.Serialize(request, _jsonOptions);
-                using var httpContent = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
-                using var response = await _httpClient.PostAsync(url, httpContent);
+                var response = await SendPostRequestAsync(url, jsonPayload);
+                var apiResponse = DeserializeResponse<GeminiApiResponse>(response);
 
-                await EnsureSuccessResponse(response, url, jsonPayload);
-
-                var payload = await response.Content.ReadAsStringAsync();
-                var apiResponse = JsonSerializer.Deserialize<GeminiApiResponse>(payload, _jsonOptions);
-
-                if (apiResponse?.Candidates == null || apiResponse.Candidates.Length == 0)
-                {
-                    return new TitleSuggestionResponseDto { Title = "No se pudo generar un título." };
-                }
-
-                var title = apiResponse.Candidates[0].Content.Parts[0].Text?.Trim();
-                return new TitleSuggestionResponseDto { Title = title ?? "No se pudo generar un título." };
+                return ExtractTitleFromResponse(apiResponse);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error generating title suggestion");
-                throw new GeniusServiceException("Failed to generate title suggestion", ex);
+                HandleException(ex, url);
+                throw;
             }
         }
 
         public async Task<DescriptionFormattingResponseDto> GetDescriptionFormattingAsync(string taskDescription)
         {
-            if (string.IsNullOrWhiteSpace(taskDescription))
+            ValidateDescription(taskDescription);
+            var prompt = CreatePromptForDescriptionFormatting(taskDescription);
+            var url = BuildRequestUrl();
+            var jsonPayload = SerializeRequest(CreateGeminiRequest(prompt, 100));
+
+            try
             {
-                throw new ArgumentException("Task description cannot be null or empty", nameof(taskDescription));
+                var response = await SendPostRequestAsync(url, jsonPayload);
+                var apiResponse = DeserializeResponse<GeminiApiResponse>(response);
+
+                return ExtractDescriptionFromResponse(apiResponse);
             }
+            catch (Exception ex)
+            {
+                HandleException(ex, url);
+                throw;
+            }
+        }
 
-            var prompt = $"Formatea la siguiente descripción de tarea para que sea más clara y fácil de entender: \"{taskDescription}\".";
+        // Métodos auxiliares para mejorar la legibilidad
+        private void ValidateDescription(string description)
+        {
+            if (string.IsNullOrWhiteSpace(description))
+            {
+                throw new ArgumentException("Task description cannot be null or empty", nameof(description));
+            }
+        }
 
-            var request = new GeminiRequest
+        private string SerializeRequest<T>(T request)
+        {
+            return JsonSerializer.Serialize(request, _jsonOptions);
+        }
+
+        private async Task<string> SendPostRequestAsync(string url, string jsonPayload)
+        {
+            using var httpContent = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
+            using var response = await _httpClient.PostAsync(url, httpContent);
+            await EnsureSuccessResponse(response, url, jsonPayload);
+            return await response.Content.ReadAsStringAsync();
+        }
+
+        private T DeserializeResponse<T>(string responsePayload)
+        {
+            return JsonSerializer.Deserialize<T>(responsePayload, _jsonOptions) ?? throw new GeniusServiceException("Failed to deserialize response");
+        }
+
+        private void HandleException(Exception ex, string url)
+        {
+            _logger.LogError(ex, "Error occurred while processing request to URL: {Url}", url);
+        }
+
+        private string CreatePromptForTitleSuggestion(string taskDescription)
+        {
+            return $"Sugiere un título breve y descriptivo para la siguiente tarea: \"{taskDescription}\".";
+        }
+
+        private string CreatePromptForDescriptionFormatting(string taskDescription)
+        {
+            return $"Formatea la siguiente descripción de tarea para que sea más clara y fácil de entender: \"{taskDescription}\".";
+        }
+
+        private GeminiRequest CreateGeminiRequest(string prompt, int maxOutputTokens)
+        {
+            return new GeminiRequest
             {
                 Contents = new[]
                 {
@@ -163,39 +152,25 @@ namespace TaskGeniusApi.Services.Genius
                 GenerationConfig = new GenerationConfig
                 {
                     Temperature = 0.7,
-                    MaxOutputTokens = 100,
+                    MaxOutputTokens = maxOutputTokens,
                     TopP = 0.9,
                     TopK = 40
                 }
             };
-
-            var url = BuildRequestUrl();
-
-            try
-            {
-                var jsonPayload = JsonSerializer.Serialize(request, _jsonOptions);
-                using var httpContent = new StringContent(jsonPayload, Encoding.UTF8, "application/json");
-                using var response = await _httpClient.PostAsync(url, httpContent);
-
-                await EnsureSuccessResponse(response, url, jsonPayload);
-
-                var payload = await response.Content.ReadAsStringAsync();
-                var apiResponse = JsonSerializer.Deserialize<GeminiApiResponse>(payload, _jsonOptions);
-
-                if (apiResponse?.Candidates == null || apiResponse.Candidates.Length == 0)
-                {
-                    return new DescriptionFormattingResponseDto { FormattedDescription = "No se pudo formatear la descripción." };
-                }
-
-                var formattedDescription = apiResponse.Candidates[0].Content.Parts[0].Text?.Trim();
-                return new DescriptionFormattingResponseDto { FormattedDescription = formattedDescription ?? "No se pudo formatear la descripción." };
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error formatting task description");
-                throw new GeniusServiceException("Failed to format task description", ex);
-            }
         }
+
+        private TitleSuggestionResponseDto ExtractTitleFromResponse(GeminiApiResponse apiResponse)
+        {
+            var title = apiResponse?.Candidates?.FirstOrDefault()?.Content?.Parts?.FirstOrDefault()?.Text?.Trim();
+            return new TitleSuggestionResponseDto { Title = title ?? "No se pudo generar un título." };
+        }
+
+        private DescriptionFormattingResponseDto ExtractDescriptionFromResponse(GeminiApiResponse apiResponse)
+        {
+            var description = apiResponse?.Candidates?.FirstOrDefault()?.Content?.Parts?.FirstOrDefault()?.Text?.Trim();
+            return new DescriptionFormattingResponseDto { Description = description ?? "No se pudo formatear la descripción." };
+        }
+
         private static void ValidateRequest(TaskAdviceRequestDto requestDto)
         {
             if (requestDto == null)
@@ -225,14 +200,14 @@ namespace TaskGeniusApi.Services.Genius
 
             return new GeminiRequest
             {
-                Contents =
-                [
+                Contents = new[]
+                {
                     new ContentItem
                     {
                         Role = "user",
-                        Parts = [new TextPart { Text = promptText.ToString() }]
+                        Parts = new[] { new TextPart { Text = promptText.ToString() } }
                     }
-                ],
+                },
                 GenerationConfig = new GenerationConfig
                 {
                     Temperature = 0.7,

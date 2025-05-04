@@ -2,11 +2,11 @@ namespace TaskGeniusApi.DTOs.Genius;
 
 public class DescriptionFormattingResponseDto
 {
-    public required string FormattedDescription { get; set; }
+    public required string Description { get; set; } = string.Empty;
 }
 
 public class DescriptionFormattingRequestDto
 {
-    public required string TaskDescription { get; set; }
+    public required string Description { get; set; } = string.Empty;
 
 }
