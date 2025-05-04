@@ -63,8 +63,8 @@ public class TasksServices(ApplicationDbContext dbContext) : ITasksServices
 
         task.Title = taskDto.Title ?? task.Title;
         task.Description = taskDto.Description ?? task.Description;
-        task.DueDate = taskDto.DueDate;
-        task.IsCompleted = taskDto.IsCompleted;
+        task.DueDate = taskDto.DueDate ?? task.DueDate;
+        task.IsCompleted = taskDto.IsCompleted?? task.IsCompleted;
 
         _dbContext.Tasks.Update(task);
         await _dbContext.SaveChangesAsync();
