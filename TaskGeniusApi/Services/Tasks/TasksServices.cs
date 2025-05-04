@@ -15,10 +15,14 @@ public class TasksServices(ApplicationDbContext dbContext) : ITasksServices
         {
             Title = taskDto.Title,
             Description = taskDto.Description,
-            DueDate = taskDto.DueDate,
             UserId = int.Parse(taskDto.UserId),
             IsCompleted = taskDto.IsCompleted,
         };
+
+        if (taskDto.DueDate != null && taskDto.DueDate != default(DateTime))
+        {
+            task.DueDate = taskDto.DueDate;
+        }
 
         await _dbContext.Tasks.AddAsync(task);
         await _dbContext.SaveChangesAsync();
@@ -31,7 +35,7 @@ public class TasksServices(ApplicationDbContext dbContext) : ITasksServices
             CreatedAt = task.CreatedAt,
             DueDate = task.DueDate,
             IsCompleted = task.IsCompleted,
-            UserId = task.UserId.ToString(),            
+            UserId = task.UserId.ToString(),
         };
     }
 
@@ -48,7 +52,7 @@ public class TasksServices(ApplicationDbContext dbContext) : ITasksServices
             CreatedAt = task.CreatedAt,
             DueDate = task.DueDate,
             IsCompleted = task.IsCompleted,
-            UserId = task.UserId.ToString(),            
+            UserId = task.UserId.ToString(),
         };
     }
 
@@ -73,7 +77,7 @@ public class TasksServices(ApplicationDbContext dbContext) : ITasksServices
             CreatedAt = task.CreatedAt,
             DueDate = task.DueDate,
             IsCompleted = task.IsCompleted,
-            UserId = task.UserId.ToString(),            
+            UserId = task.UserId.ToString(),
         };
     }
 
@@ -97,7 +101,7 @@ public class TasksServices(ApplicationDbContext dbContext) : ITasksServices
             CreatedAt = task.CreatedAt,
             DueDate = task.DueDate,
             IsCompleted = task.IsCompleted,
-            UserId = task.UserId.ToString(),            
+            UserId = task.UserId.ToString(),
         });
     }
 }

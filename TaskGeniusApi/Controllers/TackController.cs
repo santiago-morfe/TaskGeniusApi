@@ -50,13 +50,23 @@ public class TaskController(ITasksServices tasksService) : ControllerBase
     [HttpPost]
     public async Task<IActionResult> CreateTask([FromBody] CreateTaskRequestDto createTaskRequestDto)
     {
+        // validar si la fecha de vencimiento es válida
+
         var createTaskDto = new CreateTaskDto
         {
             Title = createTaskRequestDto.Title,
             Description = createTaskRequestDto.Description,
-            DueDate = createTaskRequestDto.DueDate,
             IsCompleted = createTaskRequestDto.IsCompleted
         };
+        if (createTaskRequestDto.DueDate != null)
+        {
+            createTaskDto.DueDate = createTaskRequestDto.DueDate;
+        }
+        else
+        {
+            createTaskDto.DueDate = null;
+        }
+
         var userId = GetUserIdFromToken();
         createTaskDto.UserId = userId;
         var task = await _tasksService.CreateTaskAsync(createTaskDto);

@@ -12,7 +12,7 @@ namespace TaskGeniusApi.Models
         [Required]
         public required string Description { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
-        public DateTime  DueDate{ get; set; }
+        public DateTime? DueDate { get; set; } = null;
         public bool IsCompleted { get; set; } = false;
         [Required]
         public required int UserId { get; set; }
