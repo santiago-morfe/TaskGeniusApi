@@ -82,7 +82,7 @@ void ConfigureCors(IServiceCollection services)
     {
         options.AddPolicy("PermitirTodo", policy =>
         {
-            policy.WithOrigins("http://localhost:5173")
+            policy.WithOrigins("http://localhost:5173", "https://taskgeniusapi-production-5575.up.railway.app")
                   .AllowAnyHeader()
                   .AllowAnyMethod()
                   .AllowCredentials();
