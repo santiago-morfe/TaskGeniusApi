@@ -45,13 +45,13 @@ public class GeniusController(IGeniusService geniusService, ITasksServices tasks
         return advice;
     }
 
-    [HttpGet("titleSuggestion")]
+    [HttpPost("titleSuggestion")]
     public async Task<TitleSuggestionResponseDto> GetTitleSuggestion([FromQuery] TitleSuggestionRequestDto requestDto)
     {
         return await _geniusService.GetTitleSuggestionAsync(requestDto.TaskDescription);
     }
 
-    [HttpGet("descriptionFormatting")]
+    [HttpPost("descriptionFormatting")]
     public async Task<DescriptionFormattingResponseDto> GetDescriptionFormatting([FromQuery] DescriptionFormattingRequestDto requestDto)
     {
         return await _geniusService.GetDescriptionFormattingAsync(requestDto.TaskDescription);
