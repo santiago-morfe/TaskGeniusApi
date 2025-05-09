@@ -7,4 +7,6 @@ public interface IGeniusService
     Task<TaskAdviceResponseDto> GetAdviceAsync(TaskAdviceRequestDto requestDto);
     Task<TitleSuggestionResponseDto> GetTitleSuggestionAsync(string taskDescription);
     Task<DescriptionFormattingResponseDto> GetDescriptionFormattingAsync(string taskDescription);
+    Task<TaskAdviceResponseDto> GetAdviceTaskAsync(string taskDescription);
+    Task<TaskAdviceResponseDto> GetTaskQuestionAsync(TaskAdviceRequestDto requestDto, string question);
 }

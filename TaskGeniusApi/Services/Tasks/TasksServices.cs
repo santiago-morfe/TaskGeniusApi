@@ -24,6 +24,13 @@ public class TasksServices(ApplicationDbContext dbContext) : ITasksServices
             task.DueDate = taskDto.DueDate;
         }
 
+        // que no se puedean tener mas de 20 tareas
+        var userTasksCount = await _dbContext.Tasks.CountAsync(t => t.UserId == task.UserId);
+        if (userTasksCount >= 20)
+        {
+            throw new InvalidOperationException("User cannot have more than 20 tasks.");
+        }
+
         await _dbContext.Tasks.AddAsync(task);
         await _dbContext.SaveChangesAsync();
 
