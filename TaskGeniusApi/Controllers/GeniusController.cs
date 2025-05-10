@@ -65,7 +65,7 @@ public class GeniusController(IGeniusService geniusService, ITasksServices tasks
         return await _geniusService.GetDescriptionFormattingAsync(requestDto.Description);
     }
 
-    [HttpPost("taskQuestion{question}")]
+    [HttpGet("taskQuestion/{question}")]
     public async Task<TaskAdviceResponseDto> GetTaskQuestion( string question)
     {
         if (string.IsNullOrWhiteSpace(question))
@@ -98,7 +98,7 @@ public class GeniusController(IGeniusService geniusService, ITasksServices tasks
         return await _geniusService.GetTaskQuestionAsync(requestDto, question);
     }
 
-    [HttpPost("taskAdvice{TaskId}")]
+    [HttpGet("taskAdvice/{TaskId}")]
     public async Task<TaskAdviceResponseDto> GetTaskAdvice( string TaskId)
     {
         if (string.IsNullOrWhiteSpace(TaskId))
